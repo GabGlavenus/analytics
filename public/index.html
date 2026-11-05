@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Assinatura x Exportação</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Assinatura do contrato × Exportação do lead</h1>
+    <span class="badge-ro" title="A aplicação não altera dados do CRM">Somente leitura</span>
+  </header>
+
+  <main>
+    <section class="card">
+      <form id="period-form" class="period-form">
+        <label>Período
+          <select id="preset" name="preset"></select>
+        </label>
+        <label>Data inicial
+          <input type="date" id="startDate" name="startDate" required>
+        </label>
+        <label>Data final
+          <input type="date" id="endDate" name="endDate" required>
+        </label>
+        <label>Considerar leads com
+          <select id="basis" name="basis"></select>
+        </label>
+        <label title="Qual contrato do lead fornece a data de assinatura">Assinatura considerada
+          <select id="signatureChoice" name="signatureChoice"></select>
+        </label>
+        <label>Data de exportação
+          <select id="exportSource" name="exportSource"></select>
+        </label>
+        <label>Analista
+          <select id="analyst" name="analyst"><option value="">Todas</option></select>
+        </label>
+        <button type="submit" id="run-btn" class="btn-primary">Consultar</button>
+      </form>
+      <p id="period-info" class="muted"></p>
+      <p id="error" class="error" role="alert" hidden></p>
+    </section>
+
+    <section class="kpis" aria-live="polite">
+      <article class="kpi"><span class="kpi-label">Leads analisados</span><strong id="kpi-leads">–</strong><small id="kpi-leads-sub"></small></article>
+      <article class="kpi"><span class="kpi-label">Contratos assinados</span><strong id="kpi-signed">–</strong><small id="kpi-signed-sub"></small></article>
+      <article class="kpi"><span class="kpi-label">Sem correspondência</span><strong id="kpi-nomatch">–</strong><small id="kpi-nomatch-sub"></small></article>
+      <article class="kpi"><span class="kpi-label">Tempo médio assinatura → exportação</span><strong id="kpi-avg">–</strong><small id="kpi-avg-sub"></small></article>
+      <article class="kpi kpi-alert"><span class="kpi-label">Analista que mais demora para exportar</span><strong id="kpi-slowest">–</strong><small id="kpi-slowest-sub"></small></article>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Tempo assinatura → exportação por analista</h2>
+      <p class="muted hint">Considera os leads exportados após a assinatura no período, sem o filtro de analista. Ordenado do maior para o menor tempo médio. Clique numa analista para filtrar o painel.</p>
+      <div class="table-wrap">
+        <table id="ranking">
+          <thead>
+            <tr>
+              <th class="num">#</th>
+              <th>Analista</th>
+              <th class="num">Leads</th>
+              <th class="num">Exportados após assinatura</th>
+              <th class="num">Tempo médio</th>
+              <th class="num">Mediana</th>
+              <th class="num">Maior tempo</th>
+              <th class="num">Exportados antes</th>
+              <th class="num">Sem exportação</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="9" class="empty">Consulte um período para ver o ranking.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="toolbar">
+        <div class="filters">
+          <label>Código do lead<input type="search" id="f-code" placeholder="ex.: L2026B9ZE" autocomplete="off"></label>
+          <label>Status<select id="f-status"><option value="">Todos</option></select></label>
+          <label>Tempo mín. (dias)<input type="number" id="f-min" step="0.1"></label>
+          <label>Tempo máx. (dias)<input type="number" id="f-max" step="0.1"></label>
+          <label>Assinatura de<input type="date" id="f-sig-from"></label>
+          <label>Assinatura até<input type="date" id="f-sig-to"></label>
+          <label>Exportação de<input type="date" id="f-exp-from"></label>
+          <label>Exportação até<input type="date" id="f-exp-to"></label>
+          <button type="button" id="f-clear" class="btn-ghost">Limpar filtros</button>
+        </div>
+        <div class="exports">
+          <button type="button" id="exp-xlsx" class="btn-secondary" disabled>Exportar Excel</button>
+          <button type="button" id="exp-csv" class="btn-secondary" disabled>Exportar CSV</button>
+        </div>
+      </div>
+
+      <p id="count-info" class="muted"></p>
+      <p class="muted hint">Tempo até exportar = data de exportação − data de assinatura do último contrato. Usa-se a primeira exportação após a assinatura; valores negativos indicam que o lead já tinha sido exportado antes dessa assinatura. Horários de Brasília.</p>
+      <div class="table-wrap">
+        <table id="results">
+          <thead>
+            <tr>
+              <th data-sort="leadCode" data-type="text">Código do lead</th>
+              <th data-sort="analystName" data-type="text">Analista</th>
+              <th data-sort="signedAt" data-type="text">Data de assinatura</th>
+              <th data-sort="exportedAt" data-type="text">Data de exportação</th>
+              <th data-sort="intervalDays" data-type="number" class="num" title="Exportação − assinatura">Tempo até exportar (dias)</th>
+              <th data-sort="intervalHours" data-type="number" class="num" title="Exportação − assinatura">(horas)</th>
+              <th data-sort="statusLabel" data-type="text">Status</th>
+              <th data-sort="signedCount" data-type="number" class="num">Contratos assinados</th>
+              <th data-sort="sentCount" data-type="number" class="num">Contratos enviados</th>
+            </tr>
+          </thead>
+          <tbody><tr><td colspan="9" class="empty">Selecione o período e clique em Consultar.</td></tr></tbody>
+        </table>
+      </div>
+      <nav class="pager" aria-label="Paginação">
+        <button type="button" id="pg-prev" class="btn-ghost">‹ Anterior</button>
+        <span id="pg-info"></span>
+        <button type="button" id="pg-next" class="btn-ghost">Próxima ›</button>
+        <label>Linhas por página
+          <select id="pg-size"><option>50</option><option selected>100</option><option>250</option><option>500</option></select>
+        </label>
+      </nav>
+    </section>
+  </main>
+</body>
+</html>
