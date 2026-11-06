@@ -83,8 +83,8 @@ test('ranking: ordena pelo maior tempo médio e só destaca com amostra mínima'
   assert.equal(slowest.analystName, 'Lenta');
   const lenta = analysts.find((a) => a.analystId === 2);
   assert.deepEqual(
-    [lenta.leads, lenta.exportadosAposAssinatura, lenta.mediaHoras, lenta.medianaHoras, lenta.maxHoras, lenta.exportadosAntes, lenta.semExportacao],
-    [5, 3, 20, 20, 30, 1, 1],
+    [lenta.leads, lenta.exportadosAposAssinatura, lenta.mediaHoras, lenta.medianaHoras, lenta.maxHoras, lenta.semExportacao],
+    [5, 3, 20, 20, 30, 1],
   );
   assert.equal(analysts.find((a) => a.analystId === 3).amostraSuficiente, false);
 });

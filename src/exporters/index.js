@@ -21,7 +21,6 @@ export const RANKING_COLUMNS = [
   { key: 'mediaHoras', header: 'Tempo médio (horas)', width: 14, type: 'number' },
   { key: 'medianaHoras', header: 'Mediana (horas)', width: 14, type: 'number' },
   { key: 'maxHoras', header: 'Maior tempo (horas)', width: 14, type: 'number' },
-  { key: 'exportadosAntes', header: 'Exportados antes da assinatura', width: 16, type: 'integer' },
   { key: 'semExportacao', header: 'Sem exportação', width: 12, type: 'integer' },
 ];
 

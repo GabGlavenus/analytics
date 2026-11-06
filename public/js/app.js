@@ -174,7 +174,6 @@ function renderRanking() {
     cell(tr, hoursText(a.mediaHoras), 'num');
     cell(tr, hoursText(a.medianaHoras), 'num');
     cell(tr, hoursText(a.maxHoras), 'num');
-    cell(tr, intFmt.format(a.exportadosAntes), 'num');
     cell(tr, intFmt.format(a.semExportacao), 'num');
     // Clique filtra o painel pela analista (clicar de novo remove o filtro).
     tr.addEventListener('click', () => {
@@ -184,7 +183,7 @@ function renderRanking() {
   });
   if (analysts.length === 0) {
     const td = tbody.insertRow().insertCell();
-    td.colSpan = 9;
+    td.colSpan = 8;
     td.className = 'empty';
     td.textContent = 'Nenhum lead no período.';
   }

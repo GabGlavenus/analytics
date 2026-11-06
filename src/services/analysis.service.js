@@ -89,7 +89,6 @@ export function rankAnalysts(rows, minSample = MIN_SAMPLE) {
       mediaHoras: mean === null ? null : round1(mean),
       medianaHoras: hours.length ? round1(median(hours)) : null,
       maxHoras: hours.length ? hours.at(-1) : null,
-      exportadosAntes: count('ANTES'),
       semExportacao: count('SEM_EXPORTACAO'),
       amostraSuficiente: hours.length >= minSample,
     };

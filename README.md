@@ -2,6 +2,8 @@
 
 Aplicação web em Node.js que consulta o `crmdb` (MySQL 8) **somente em modo leitura** e mede, para cada lead, quanto tempo levou para o lead ser **exportado ao SGA depois que o último contrato foi assinado** na Clicksign. Mostra também a **analista responsável** por cada lead e um **ranking das analistas** pelo tempo até a exportação.
 
+Documentação detalhada (uso, origem de cada dado e regras de status) em [`docs/`](docs/README.md).
+
 ## Requisitos
 
 - Node.js 20 ou superior (testado no 24)
@@ -62,7 +64,7 @@ GRANT SELECT ON crmdb.* TO 'analise_leitura'@'%';
 
 ### Ranking por analista
 
-- A seção **"Tempo assinatura → exportação por analista"** mostra, para cada analista: leads no período, quantos foram exportados após a assinatura, tempo médio, mediana, maior tempo, exportados antes da assinatura e sem exportação. Clicar numa linha filtra o painel por aquela analista; clicar de novo remove o filtro.
+- A seção **"Tempo assinatura → exportação por analista"** mostra, para cada analista: leads no período, quantos foram exportados após a assinatura, tempo médio, mediana, maior tempo e sem exportação. Clicar numa linha filtra o painel por aquela analista; clicar de novo remove o filtro.
 - O ranking sempre compara **todas** as analistas do período, mesmo com o filtro de analista ativo.
 - **Analista que mais demora** é a de maior **tempo médio** entre as que têm pelo menos **10 leads** exportados após a assinatura (`MIN_SAMPLE` em `src/services/analysis.service.js`). Assim, contas com 1 ou 2 leads, como usuários de teste, não definem o destaque. Elas continuam no ranking, em tom mais claro.
 - A média é sensível a casos extremos (por exemplo, um lead que levou 50 dias). Compare sempre com a **mediana**, que mostra o tempo típico.
