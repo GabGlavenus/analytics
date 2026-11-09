@@ -87,13 +87,29 @@ function addTableSheet(wb, title, columns, rows) {
   return ws;
 }
 
-export async function toXlsx(rows, meta = {}, ranking = []) {
+const MAX_REPORT_CHARS = 500_000;
+
+/** Texto do relatório: string opcional, com tamanho limitado. */
+export function sanitizeReport(report) {
+  if (report === undefined || report === null || report === '') return '';
+  if (typeof report !== 'string') throw badRequest('Corpo inválido: "report" deve ser texto.');
+  if (report.length > MAX_REPORT_CHARS) throw badRequest(`Relatório maior que ${MAX_REPORT_CHARS} caracteres.`);
+  return report;
+}
+
+export async function toXlsx(rows, meta = {}, ranking = [], report = '') {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'Análise assinatura x exportação';
   wb.created = new Date();
 
   addTableSheet(wb, 'Resultados', EXPORT_COLUMNS, rows);
   if (ranking.length) addTableSheet(wb, 'Por analista', RANKING_COLUMNS, ranking);
+  if (report) {
+    // Uma linha do texto por célula, em fonte monoespaçada para manter as tabelas alinhadas.
+    const ws = wb.addWorksheet('Relatório');
+    ws.getColumn(1).width = 160;
+    for (const line of report.split(/\r?\n/)) ws.addRow([formulaSafe(line)]).font = { name: 'Consolas', size: 10 };
+  }
 
   const info = wb.addWorksheet('Parâmetros');
   info.columns = [{ header: 'Parâmetro', key: 'k', width: 30 }, { header: 'Valor', key: 'v', width: 60 }];

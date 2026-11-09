@@ -77,12 +77,19 @@
       <div class="toolbar">
         <h2 class="card-title">Relatório em texto</h2>
         <div class="exports">
+          <label title="Prazos em horas para medir o cumprimento, separados por vírgula (até 5)">Metas (h)
+            <input type="text" id="report-goals" value="24, 48, 72" inputmode="numeric" autocomplete="off" size="12">
+          </label>
           <button type="button" id="report-copy" class="btn-secondary">Copiar texto</button>
           <button type="button" id="report-download" class="btn-secondary">Baixar .txt</button>
           <button type="button" id="report-close" class="btn-ghost">Fechar</button>
         </div>
       </div>
-      <p class="muted hint">Gerado a partir dos leads filtrados na tabela abaixo. Ao mudar filtros, gere de novo.</p>
+      <p class="muted hint">Gerado a partir dos leads filtrados na tabela abaixo. Ao mudar filtros, gere de novo. O Excel exportado inclui este relatório na aba "Relatório".</p>
+      <div class="charts">
+        <figure id="chart-hist" class="chart-fig"></figure>
+        <figure id="chart-box" class="chart-fig"></figure>
+      </div>
       <pre id="report-text" class="report" tabindex="0"></pre>
     </section>
 

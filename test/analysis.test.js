@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { classify, rankAnalysts, summarize } from '../src/services/analysis.service.js';
 import { resolvePeriod } from '../src/services/period.service.js';
 import { subtractMonths, parseIsoDate, toIsoDate, dbDateToMs, shiftTimezone, todayIn } from '../src/utils/dates.js';
-import { sanitizeRanking, sanitizeRows, toCsv, toXlsx } from '../src/exporters/index.js';
+import { sanitizeRanking, sanitizeReport, sanitizeRows, toCsv, toXlsx } from '../src/exporters/index.js';
 
 const lead = (over) => ({ leadCode: 'L2026B9ZE', signedAt: null, exportedAt: null, sentCount: 0, signedCount: 0, ...over });
 const signed = (signedAt, exportedAt, over) => lead({ signedAt, exportedAt, sentCount: 1, signedCount: 1, ...over });
@@ -150,4 +150,16 @@ test('exportação XLSX: resultados, ranking por analista e parâmetros', async 
   const r = wb.getWorksheet('Por analista').getRow(2).values.slice(1);
   assert.deepEqual(r.slice(0, 4), ['Ana', 1, 1, 24]);
   assert.throws(() => sanitizeRanking('x'), /lista/);
+});
+
+test('exportação XLSX: aba "Relatório" com o texto, protegida contra fórmulas', async () => {
+  const ExcelJS = (await import('exceljs')).default;
+  const buf = await toXlsx([], {}, [], sanitizeReport('RELATÓRIO\n=CMD()\n  Média ... 1,0 h'));
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(Buffer.from(buf));
+  const ws = wb.getWorksheet('Relatório');
+  assert.deepEqual([1, 2, 3].map((i) => ws.getCell(`A${i}`).value), ['RELATÓRIO', "'=CMD()", '  Média ... 1,0 h']);
+  assert.equal(sanitizeReport(undefined), '');
+  assert.throws(() => sanitizeReport(42), /texto/);
+  assert.throws(() => sanitizeReport('x'.repeat(500_001)), /maior/);
 });

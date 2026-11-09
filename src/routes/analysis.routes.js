@@ -4,7 +4,7 @@ import { PRESETS, resolvePeriod } from '../services/period.service.js';
 import {
   EXPORT_SOURCES, findAnalysts, PERIOD_BASES, SIGNATURE_CHOICES,
 } from '../repositories/leadContract.repository.js';
-import { sanitizeRanking, sanitizeRows, toCsv, toXlsx } from '../exporters/index.js';
+import { sanitizeRanking, sanitizeReport, sanitizeRows, toCsv, toXlsx } from '../exporters/index.js';
 
 export const router = Router();
 
@@ -64,7 +64,7 @@ router.post('/export/csv', (req, res) => {
 router.post('/export/xlsx', async (req, res) => {
   const rows = sanitizeRows(req.body?.rows);
   const ranking = sanitizeRanking(req.body?.ranking);
-  const buffer = await toXlsx(rows, safeMeta(req.body?.meta), ranking);
+  const buffer = await toXlsx(rows, safeMeta(req.body?.meta), ranking, sanitizeReport(req.body?.report));
   res.attachment(`assinatura-x-exportacao-${fileStamp()}.xlsx`)
     .type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     .send(Buffer.from(buffer));

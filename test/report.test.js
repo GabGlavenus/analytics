@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { describe, medianCI, quantile, shareAtMost, upperFence } from '../public/js/stats.js';
-import { buildReport } from '../public/js/report.js';
+import { analyze, buildReport, parseGoals } from '../public/js/report.js';
+import { boxplotSvg, histogramSvg } from '../public/js/charts.js';
 
 test('quantil com interpolação linear (igual ao QUARTIL.INC)', () => {
   const s = [1, 2, 3, 4];
@@ -67,4 +68,59 @@ test('relatório com amostra pequena não calcula estatísticas', () => {
   const text = buildReport([row(1, 'Ana', 10, 1), row(1, 'Ana', 12, 2)]);
   assert.match(text, /Amostra insuficiente/);
   assert.doesNotMatch(text, /ESTATÍSTICA DESCRITIVA/);
+});
+
+test('metas digitadas: vírgula ou espaço separam, inválidas devolvem null', () => {
+  assert.deepEqual(parseGoals('48, 24 72'), [24, 48, 72]);
+  assert.deepEqual(parseGoals('24,24;12'), [12, 24]);
+  assert.equal(parseGoals(''), null);
+  assert.equal(parseGoals('24, abc'), null);
+  assert.equal(parseGoals('-1'), null);
+  assert.equal(parseGoals('1 2 3 4 5 6'), null);
+});
+
+test('relatório usa as metas escolhidas, também por analista', () => {
+  const rows = [];
+  for (let i = 0; i < 12; i += 1) rows.push(row(1, 'Ana', 10 + i, i), row(2, 'Bia', 30 + i, i));
+  const text = buildReport(rows, { goals: [12, 36] });
+  assert.match(text, /Até 12,0 h \.+ 12,5%/);
+  assert.match(text, /Até 36,0 h/);
+  assert.doesNotMatch(text, /Até 72,0 h/);
+});
+
+const fmt = (ms) => new Date(ms).toISOString().slice(0, 19).replace('T', ' ');
+const DAY = 86_400_000;
+
+test('tendência ignora leads recentes ainda sem exportação (censura à direita)', () => {
+  const start = Date.UTC(2026, 8, 1, 12);
+  const rows = [];
+  for (let i = 0; i < 40; i += 1) {
+    const h = i < 20 ? 10 : 20;
+    rows.push({ ...row(1, 'Ana', h, i), signedAt: fmt(start + i * DAY), exportedAt: fmt(start + i * DAY + h * 3_600_000) });
+  }
+  const pend = (ms, i) => ({ leadCode: `P${i}`, analystId: 1, analystName: 'Ana', status: 'SEM_EXPORTACAO', intervalHours: null, signedAt: fmt(ms), exportedAt: null });
+  for (let i = 0; i < 5; i += 1) rows.push(pend(start + 39 * DAY + 3_600_000, i)); // assinados no fim: ainda no prazo normal
+  rows.push(pend(start + 5 * DAY, 9)); // parado há mais de um mês
+  const a = analyze(rows);
+  assert.equal(a.trend.excludedRecent, 5);
+  assert.equal(a.trend.pendingIncluded, 0); // o parado passa do limite: é outlier
+  assert.equal(a.stuck, 1);
+  assert.equal(a.trend.first.median, 10);
+  assert.equal(a.trend.second.median, 20);
+  assert.match(buildReport(rows), /piora de 100,0%/);
+});
+
+test('gráficos: histograma com barra de outliers e boxplot com nomes escapados', () => {
+  const rows = [];
+  for (let i = 0; i < 20; i += 1) rows.push(row(1, '<b>Ana</b>', 40 + (i % 5), i), row(2, 'Bia', 10 + (i % 5), i));
+  rows.push(row(2, 'Bia', 900, 99));
+  const a = analyze(rows);
+  const hist = histogramSvg(a);
+  assert.match(hist, /^<svg[^>]*role="img"/);
+  assert.match(hist, /Outliers \(acima de [\d,.]+ h\): 1 leads/);
+  const box = boxplotSvg(a);
+  assert.match(box, /&lt;b&gt;Ana&lt;\/b&gt;/);
+  assert.doesNotMatch(box, /<b>/);
+  assert.match(box, /\+1 outliers/);
+  assert.equal(histogramSvg(analyze([row(1, 'Ana', 1, 1)])), '');
 });

@@ -1,7 +1,8 @@
 // Interface: consulta a API, aplica filtros/ordenação/paginação no navegador
 // e envia as linhas visíveis (filtradas e ordenadas) para exportação.
 
-import { buildReport } from './report.js';
+import { analyze, buildReport, DEFAULT_GOALS, parseGoals } from './report.js';
+import { boxplotSvg, histogramSvg } from './charts.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -341,7 +342,9 @@ async function exportAs(format) {
     const res = await api(`/export/${format}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows: state.view, meta, ranking: ranking.analysts }),
+      body: JSON.stringify({
+        rows: state.view, meta, ranking: ranking.analysts, ...(format === 'xlsx' && { report: reportText(currentGoals() ?? DEFAULT_GOALS) }),
+      }),
     });
     const name = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? `resultado.${format}`;
     download(await res.blob(), name);
@@ -363,9 +366,13 @@ function download(blob, name) {
   URL.revokeObjectURL(url);
 }
 
-$('gen-report').addEventListener('click', () => {
+const currentGoals = () => parseGoals($('report-goals').value);
+
+// Sempre a partir das linhas visíveis agora, para o texto bater com a tabela.
+function reportText(goals) {
   const { period: p } = state.result;
-  $('report-text').textContent = buildReport(state.view, {
+  return buildReport(state.view, {
+    goals,
     header: [
       `Período: ${p.label} (${fmtDate(p.startDate)} a ${fmtDate(p.endDate)}) · Analista: ${p.analystLabel}`,
       `Regras: ${p.basisLabel} · ${p.signatureChoiceLabel} · ${p.exportSourceLabel}`,
@@ -373,9 +380,29 @@ $('gen-report').addEventListener('click', () => {
       `Gerado em ${new Date().toLocaleString('pt-BR')} (horário de Brasília)`,
     ],
   });
+}
+
+function setChart(id, caption, svg) {
+  $(id).innerHTML = svg ? `<figcaption>${caption}</figcaption>${svg}` : '';
+}
+
+function generateReport({ scroll = false } = {}) {
+  showError(null);
+  const goals = currentGoals();
+  if (!goals) {
+    showError('Metas inválidas: use até 5 números positivos em horas, separados por vírgula (ex.: 24, 48, 72).');
+    return;
+  }
+  const a = analyze(state.view, { goals });
+  setChart('chart-hist', 'Distribuição do tempo até exportar', histogramSvg(a));
+  setChart('chart-box', 'Tempo por analista, sem outliers', boxplotSvg(a));
+  $('report-text').textContent = reportText(goals);
   $('report-card').hidden = false;
-  $('report-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-});
+  if (scroll) $('report-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+$('gen-report').addEventListener('click', () => generateReport({ scroll: true }));
+$('report-goals').addEventListener('change', () => generateReport());
 $('report-copy').addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText($('report-text').textContent);
