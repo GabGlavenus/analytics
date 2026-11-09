@@ -73,6 +73,19 @@
       </div>
     </section>
 
+    <section class="card" id="report-card" hidden>
+      <div class="toolbar">
+        <h2 class="card-title">Relatório em texto</h2>
+        <div class="exports">
+          <button type="button" id="report-copy" class="btn-secondary">Copiar texto</button>
+          <button type="button" id="report-download" class="btn-secondary">Baixar .txt</button>
+          <button type="button" id="report-close" class="btn-ghost">Fechar</button>
+        </div>
+      </div>
+      <p class="muted hint">Gerado a partir dos leads filtrados na tabela abaixo. Ao mudar filtros, gere de novo.</p>
+      <pre id="report-text" class="report" tabindex="0"></pre>
+    </section>
+
     <section class="card">
       <div class="toolbar">
         <div class="filters">
@@ -89,6 +102,7 @@
         <div class="exports">
           <button type="button" id="exp-xlsx" class="btn-secondary" disabled>Exportar Excel</button>
           <button type="button" id="exp-csv" class="btn-secondary" disabled>Exportar CSV</button>
+          <button type="button" id="gen-report" class="btn-primary" disabled title="Estatística descritiva e análise em texto dos leads filtrados na tabela">Gerar relatório</button>
         </div>
       </div>
 

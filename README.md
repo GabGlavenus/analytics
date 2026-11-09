@@ -58,7 +58,8 @@ GRANT SELECT ON crmdb.* TO 'analise_leitura'@'%';
 4. **Data de exportação:** exportação do **associado** (padrão) ou do **veículo** ao SGA.
 5. **Analista:** todas, uma analista específica ou "Sem analista". O filtro vale para indicadores, tabela e arquivos exportados. Com um resultado na tela, trocar a analista refaz a consulta.
 6. **Consultar.** Na tabela é possível filtrar por código, status, tempo mínimo e máximo (em dias), data de assinatura e data de exportação, além de ordenar clicando no cabeçalho.
-7. **Exportar Excel / CSV:** o arquivo sai exatamente como está na tela, já filtrado e ordenado. O Excel inclui as abas "Por analista" (ranking) e "Parâmetros" (período, regras e filtros usados).
+7. **Gerar relatório:** análise em texto dos leads filtrados, com estatística descritiva, outliers isolados (Q3 + 1,5 × IQR), metas de 24/48/72 h, comparação entre analistas com intervalo de 95% da mediana e tendência. Detalhes em [docs/uso.md](docs/uso.md#relatório-em-texto).
+8. **Exportar Excel / CSV:** o arquivo sai exatamente como está na tela, já filtrado e ordenado. O Excel inclui as abas "Por analista" (ranking) e "Parâmetros" (período, regras e filtros usados).
 
 **Tempo até exportar = data de exportação − data de assinatura**, em dias e em horas. O indicador "Tempo médio assinatura → exportação" considera só os leads exportados **depois** da assinatura. Os exportados antes aparecem à parte.
 
@@ -117,7 +118,10 @@ lead.id ── analise.leadId (único) ── analise.usuarioId ── user.id  
 ├── public/                     Interface web (HTML/CSS/JS puros, sem build)
 │   ├── index.html
 │   ├── css/styles.css
-│   └── js/app.js               filtros, ordenação, paginação e exportação
+│   └── js/
+│       ├── app.js              filtros, ordenação, paginação e exportação
+│       ├── report.js           relatório em texto (outliers, analistas, tendência)
+│       └── stats.js            estatística descritiva pura (sem DOM)
 ├── scripts/
 │   └── inspect-schema.js       inspeção da estrutura do banco (leitura, sem dados pessoais)
 ├── src/

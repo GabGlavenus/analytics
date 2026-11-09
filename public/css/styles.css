@@ -122,7 +122,19 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-end; }
 .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
 .filters input[type="number"] { width: 110px; }
-.exports { display: flex; gap: 8px; }
+.exports { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.report {
+  margin: 10px 0 0;
+  padding: 14px;
+  max-height: 70vh;
+  overflow: auto;
+  background: var(--row-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: 13px/1.5 ui-monospace, Consolas, monospace;
+  white-space: pre;
+}
 
 .table-wrap { overflow-x: auto; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }

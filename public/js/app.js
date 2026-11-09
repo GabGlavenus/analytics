@@ -1,6 +1,8 @@
 // Interface: consulta a API, aplica filtros/ordenação/paginação no navegador
 // e envia as linhas visíveis (filtradas e ordenadas) para exportação.
 
+import { buildReport } from './report.js';
+
 const $ = (id) => document.getElementById(id);
 
 const state = {
@@ -286,7 +288,7 @@ function renderTable() {
   $('pg-info').textContent = `Página ${state.page} de ${pages}`;
   $('pg-prev').disabled = state.page <= 1;
   $('pg-next').disabled = state.page >= pages;
-  $('exp-xlsx').disabled = $('exp-csv').disabled = total === 0;
+  $('exp-xlsx').disabled = $('exp-csv').disabled = $('gen-report').disabled = total === 0;
 }
 
 for (const th of document.querySelectorAll('#results th[data-sort]')) {
@@ -311,6 +313,8 @@ $('pg-size').addEventListener('change', () => { state.pageSize = Number($('pg-si
 
 // ---------- Exportação ----------
 
+const filtersText = (f) => Object.entries(f).filter(([, v]) => v !== '' && v !== null).map(([k, v]) => `${k}=${v}`).join(', ') || 'nenhum';
+
 async function exportAs(format) {
   showError(null);
   const { period, summary, ranking } = state.result;
@@ -328,7 +332,7 @@ async function exportAs(format) {
     'Tempo médio após a assinatura (h)': summary.mediaHorasAposAssinatura ?? '',
     'Mediana após a assinatura (h)': summary.medianaHorasAposAssinatura ?? '',
     'Fuso': 'Horário de Brasília',
-    'Filtros aplicados': Object.entries(f).filter(([, v]) => v !== '' && v !== null).map(([k, v]) => `${k}=${v}`).join(', ') || 'nenhum',
+    'Filtros aplicados': filtersText(f),
     'Ordenação': `${state.sort.key} ${state.sort.dir}`,
     'Linhas exportadas': state.view.length,
     'Consultado em': new Date(state.result.generatedAt).toLocaleString('pt-BR'),
@@ -340,17 +344,50 @@ async function exportAs(format) {
       body: JSON.stringify({ rows: state.view, meta, ranking: ranking.analysts }),
     });
     const name = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? `resultado.${format}`;
-    const url = URL.createObjectURL(await res.blob());
-    const a = Object.assign(document.createElement('a'), { href: url, download: name });
-    document.body.append(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    download(await res.blob(), name);
   } catch (err) {
     showError(err.message);
   }
 }
 $('exp-xlsx').addEventListener('click', () => exportAs('xlsx'));
 $('exp-csv').addEventListener('click', () => exportAs('csv'));
+
+// ---------- Relatório em texto ----------
+
+function download(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+$('gen-report').addEventListener('click', () => {
+  const { period: p } = state.result;
+  $('report-text').textContent = buildReport(state.view, {
+    header: [
+      `Período: ${p.label} (${fmtDate(p.startDate)} a ${fmtDate(p.endDate)}) · Analista: ${p.analystLabel}`,
+      `Regras: ${p.basisLabel} · ${p.signatureChoiceLabel} · ${p.exportSourceLabel}`,
+      `Filtros da tabela: ${filtersText(currentFilters())}`,
+      `Gerado em ${new Date().toLocaleString('pt-BR')} (horário de Brasília)`,
+    ],
+  });
+  $('report-card').hidden = false;
+  $('report-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+$('report-copy').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText($('report-text').textContent);
+    $('report-copy').textContent = 'Copiado!';
+    setTimeout(() => { $('report-copy').textContent = 'Copiar texto'; }, 1500);
+  } catch {
+    showError('Não foi possível copiar. Selecione o texto e use Ctrl+C.');
+  }
+});
+$('report-download').addEventListener('click', () => {
+  download(new Blob([$('report-text').textContent], { type: 'text/plain;charset=utf-8' }), `relatorio-assinatura-x-exportacao-${new Date().toISOString().slice(0, 10)}.txt`);
+});
+$('report-close').addEventListener('click', () => { $('report-card').hidden = true; });
 
 loadOptions().catch((err) => showError(err.message));
