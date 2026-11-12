@@ -1,6 +1,11 @@
-# Assinatura do contrato × Exportação do lead
+# Análises do CRM
 
-Aplicação web em Node.js que consulta o `crmdb` (MySQL 8) **somente em modo leitura** e mede, para cada lead, quanto tempo levou para o lead ser **exportado ao SGA depois que o último contrato foi assinado** na Clicksign. Mostra também a **analista responsável** por cada lead e um **ranking das analistas** pelo tempo até a exportação.
+Aplicação web em Node.js que consulta o `crmdb` (MySQL 8) **somente em modo leitura**. Tem duas telas, ligadas pelo menu no topo:
+
+- **Assinatura × Exportação** (`/`): mede, para cada lead, quanto tempo levou para o lead ser **exportado ao SGA depois que o último contrato foi assinado** na Clicksign. Mostra também a **analista responsável** por cada lead e um **ranking das analistas** pelo tempo até a exportação.
+- **Análises por analista** (`/analistas.html`): **análises concluídas** no período, por analista e por dia (documento × vistoria), com busca por associado, CPF/CNPJ, placa ou código e a **ficha completa** de cada análise. Veja [docs/analistas.md](docs/analistas.md).
+
+Pode ser usada só neste computador ou **pela rede local** — veja [docs/rede.md](docs/rede.md).
 
 Documentação detalhada (uso, origem de cada dado e regras de status) em [`docs/`](docs/README.md).
 
@@ -14,7 +19,7 @@ Documentação detalhada (uso, origem de cada dado e regras de status) em [`docs
 ```bash
 npm install
 cp .env.example .env      # no Windows: copy .env.example .env
-# edite o .env com host, porta, usuário e senha
+# edite o .env com host, porta, usuário e senha do banco
 npm start
 ```
 
@@ -34,7 +39,7 @@ Depois, abra **http://127.0.0.1:3000**.
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | Conexão com o banco |
 | `DB_TIMEZONE` | Fuso em que o banco grava as datas. O `crmdb` grava em **UTC** (`+00:00`) |
 | `APP_TIMEZONE` | Fuso de exibição e dos limites do período (`-03:00`, horário de Brasília) |
-| `PORT`, `HOST` | Endereço do servidor web. Por padrão só aceita acesso da própria máquina (`127.0.0.1`) |
+| `PORT`, `HOST` | Endereço do servidor web. Por padrão só aceita acesso da própria máquina (`127.0.0.1`); `0.0.0.0` libera para a rede local ([docs/rede.md](docs/rede.md)) |
 
 O `.env` está no `.gitignore`. Nunca coloque credenciais no código.
 
@@ -45,7 +50,7 @@ CREATE USER 'analise_leitura'@'%' IDENTIFIED BY '...';
 GRANT SELECT ON crmdb.* TO 'analise_leitura'@'%';
 ```
 
-## Como usar
+## Como usar (Assinatura × Exportação)
 
 1. **Período:** escolha entre últimos 30 dias, 2, 3, 6 ou 12 meses, ou personalizado. Se você editar uma das datas, o período passa a ser personalizado.
 2. **Considerar leads com:** define qual data precisa cair no período:
@@ -115,11 +120,15 @@ lead.id ── analise.leadId (único) ── analise.usuarioId ── user.id  
 ## Estrutura do projeto
 
 ```
+├── iniciar.bat                 inicia o sistema com dois cliques (Windows)
+├── liberar-firewall.ps1        libera a porta na rede local (Windows)
 ├── public/                     Interface web (HTML/CSS/JS puros, sem build)
-│   ├── index.html
-│   ├── css/styles.css
+│   ├── index.html              tela Assinatura × Exportação
+│   ├── analistas.html          tela Análises por analista
+│   ├── css/styles.css          estilos das duas telas (tema claro/escuro)
 │   └── js/
 │       ├── app.js              filtros, ordenação, paginação e exportação
+│       ├── analistas.js        tela Análises por analista
 │       ├── report.js           relatório em texto (outliers, analistas, tendência)
 │       ├── charts.js           histograma e boxplot em SVG
 │       └── stats.js            estatística descritiva pura (sem DOM)
@@ -130,13 +139,17 @@ lead.id ── analise.leadId (único) ── analise.usuarioId ── user.id  
 │   ├── app.js                  Express + helmet + rotas
 │   ├── config/index.js         leitura e validação do .env
 │   ├── db/pool.js              pool MySQL em sessão READ ONLY
-│   ├── repositories/
-│   │   └── leadContract.repository.js   ÚNICO lugar com SQL / nomes de tabelas
+│   ├── repositories/           ÚNICOS lugares com SQL / nomes de tabelas
+│   │   ├── leadContract.repository.js   assinatura × exportação
+│   │   └── analystReview.repository.js  análises concluídas por analista
 │   ├── services/
 │   │   ├── period.service.js   períodos pré-definidos e personalizados
-│   │   └── analysis.service.js comparação, status e indicadores
+│   │   ├── analysis.service.js comparação, status e indicadores
+│   │   └── analystReview.service.js     validação dos filtros das análises
 │   ├── exporters/index.js      geração de CSV e XLSX
-│   ├── routes/analysis.routes.js
+│   ├── routes/
+│   │   ├── analysis.routes.js           /api/options, /api/analysis, /api/export
+│   │   └── analystReview.routes.js      /api/analises
 │   ├── middleware/errorHandler.js
 │   └── utils/dates.js          datas e fusos
 └── test/                       testes (node:test)
@@ -149,6 +162,10 @@ lead.id ── analise.leadId (único) ── analise.usuarioId ── user.id  
 | GET | `/api/options` | Períodos (com as datas de hoje), opções, analistas, status e padrões |
 | GET | `/api/analysis?preset=2m` | Análise. Parâmetros: `preset`, `startDate`, `endDate` (com `preset=custom`), `basis` (`qualquer`/`assinatura`/`exportacao`), `signatureChoice` (`ultimo_assinado`/`ultimo_enviado`), `exportSource` (`associado`/`veiculo`), `analyst` (id do usuário ou `sem`). A resposta traz `rows`, `summary` e `ranking` |
 | POST | `/api/export/xlsx` · `/api/export/csv` | Corpo: `{ rows, meta, ranking?, report? }` (`report`: texto do relatório, só no XLSX). Devolve o arquivo |
+| GET | `/api/analises/analistas` | Analistas que já concluíram alguma análise (`id`, `nome`, `ativo`) |
+| GET | `/api/analises/resumo` | Totais `porAnalista` e `porDia`. Parâmetros: `inicio`, `fim` (AAAA-MM-DD, inclusivos), `analista` (id), `busca` |
+| GET | `/api/analises` | Análises concluídas (até 1000, mais recentes primeiro). Mesmos parâmetros |
+| GET | `/api/analises/:codigo` | Ficha completa da análise, com o `veiculo` cadastrado após a venda |
 
 Exemplo: `GET /api/analysis?preset=custom&startDate=2026-09-01&endDate=2026-10-31&basis=assinatura`
 
@@ -157,8 +174,8 @@ Exemplo: `GET /api/analysis?preset=custom&startDate=2026-09-01&endDate=2026-10-3
 - **Somente leitura em duas camadas:** a aplicação só executa `SELECT`, e toda conexão abre com `SET SESSION TRANSACTION READ ONLY`, então o próprio MySQL recusa qualquer escrita.
 - **Consultas parametrizadas:** as datas vão como parâmetros (`?`). Os trechos de SQL que variam vêm de listas fixas no código, e qualquer valor fora delas é recusado com erro 400.
 - **Proteções web e de arquivo:**
-  - cabeçalhos de segurança via `helmet` (CSP etc.);
-  - servidor acessível só pela própria máquina por padrão;
+  - cabeçalhos de segurança via `helmet` (CSP etc.), sem `upgrade-insecure-requests` porque o acesso na rede é por http;
+  - servidor acessível só pela própria máquina por padrão; na rede, sem login: o acesso é limitado pela regra de firewall restrita à rede local;
   - erros internos não expõem SQL ao navegador;
   - o CSV é protegido contra injeção de fórmulas no Excel.
 

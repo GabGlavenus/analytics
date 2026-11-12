@@ -1,7 +1,7 @@
 {
-  "name": "crm-exportacao-x-envio",
+  "name": "crm-analises",
   "version": "1.0.0",
-  "description": "Análise do intervalo entre a exportação do lead e o envio do contrato à Clicksign (somente leitura).",
+  "description": "Análises do CRM (somente leitura): assinatura do contrato × exportação do lead e análises concluídas por analista.",
   "private": true,
   "type": "module",
   "main": "src/server.js",

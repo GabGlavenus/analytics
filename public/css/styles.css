@@ -48,6 +48,7 @@ body {
 
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 14px 24px;
@@ -55,6 +56,10 @@ body {
   border-bottom: 1px solid var(--border);
 }
 .topbar h1 { font-size: 18px; margin: 0; }
+.topnav { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+.topnav a { color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 6px; }
+.topnav a:hover { background: var(--neutral-bg); color: var(--text); }
+.topnav a[aria-current="page"] { background: var(--neutral-bg); color: var(--primary); font-weight: 600; }
 .badge-ro {
   font-size: 12px;
   padding: 2px 8px;
@@ -178,7 +183,57 @@ tbody tr:nth-child(even) { background: var(--row-alt); }
 .pager { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
 .pager label { flex-direction: row; align-items: center; gap: 6px; margin-left: auto; }
 
+/* ---------- Tela "Análises por analista" ---------- */
+.shortcuts { display: flex; gap: 6px; flex-wrap: wrap; }
+.shortcuts button { padding: 6px 10px; font-size: 13px; background: var(--neutral-bg); color: var(--text); border-color: var(--border); }
+.shortcuts button.is-active { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+#busca { min-width: 260px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.table-wrap.scroll { max-height: 480px; overflow: auto; }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover { background: var(--neutral-bg); }
+tr.is-selected { outline: 2px solid var(--primary); outline-offset: -2px; }
+.bar { height: 8px; min-width: 2px; background: var(--primary); opacity: .45; border-radius: 4px; }
+.tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--neutral-bg); color: var(--primary); }
+.sub { color: var(--muted); font-size: 12px; }
+.title-note { font-weight: 400; color: var(--muted); font-size: 12px; }
+
+dialog {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0;
+  width: min(920px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  background: var(--surface);
+  color: var(--text);
+}
+dialog::backdrop { background: rgba(15, 23, 42, .45); }
+.dlg-head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.dlg-head h3 { margin: 0; font-size: 17px; }
+.dlg-body { padding: 4px 20px 20px; }
+.section h4 { margin: 18px 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 16px; }
+.field .l { font-size: 11px; color: var(--muted); }
+.field .v { word-break: break-word; }
+.warn { color: var(--missing); font-weight: 600; }
+
+@media (max-width: 900px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 640px) {
+  .topnav { margin-left: 0; }
+  #busca { min-width: 0; }
   main { padding: 16px; }
   .topbar { padding: 12px 16px; }
   .period-form > label, .filters > label { flex: 1 1 140px; }

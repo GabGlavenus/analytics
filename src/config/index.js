@@ -33,6 +33,7 @@ export const config = Object.freeze({
   }),
   server: Object.freeze({
     port: Number(process.env.PORT || 3000),
+    // 0.0.0.0 libera o acesso pelos outros computadores da rede.
     host: process.env.HOST || '127.0.0.1',
   }),
 });

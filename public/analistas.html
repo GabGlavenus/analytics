@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Análises por Analista</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module" src="js/analistas.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Análises concluídas por analista</h1>
+    <nav class="topnav" aria-label="Telas">
+      <a href="./">Assinatura × Exportação</a>
+      <a href="analistas.html" aria-current="page">Análises por analista</a>
+    </nav>
+    <span class="badge-ro" title="A aplicação não altera dados do CRM">Somente leitura</span>
+  </header>
+
+  <main>
+    <section class="card">
+      <form id="form" class="period-form">
+        <label>De <input type="date" id="inicio" required></label>
+        <label>Até <input type="date" id="fim" required></label>
+        <label>Analista
+          <select id="analista"><option value="">Todas</option></select>
+        </label>
+        <label>Buscar
+          <input type="search" id="busca" placeholder="Associado, CPF, placa ou código" autocomplete="off">
+        </label>
+        <button type="submit" class="btn-primary">Filtrar</button>
+        <div class="shortcuts" id="atalhos">
+          <button type="button" data-p="hoje">Hoje</button>
+          <button type="button" data-p="ontem">Ontem</button>
+          <button type="button" data-p="7d">Últimos 7 dias</button>
+          <button type="button" data-p="mes">Este mês</button>
+          <button type="button" data-p="mesAnt">Mês passado</button>
+        </div>
+      </form>
+      <p id="error" class="error" role="alert" hidden></p>
+    </section>
+
+    <section class="kpis" aria-live="polite">
+      <article class="kpi"><span class="kpi-label">Análises concluídas</span><strong id="kTotal">–</strong></article>
+      <article class="kpi"><span class="kpi-label">Documento</span><strong id="kDoc">–</strong></article>
+      <article class="kpi"><span class="kpi-label">Vistoria</span><strong id="kVis">–</strong></article>
+      <article class="kpi"><span class="kpi-label">Analistas</span><strong id="kAnalistas">–</strong></article>
+    </section>
+
+    <div class="grid-2">
+      <section class="card">
+        <h2 class="card-title">Por analista <span class="title-note">(clique para filtrar)</span></h2>
+        <div class="table-wrap" id="porAnalista"></div>
+      </section>
+      <section class="card">
+        <h2 class="card-title">Por dia</h2>
+        <div class="table-wrap scroll" id="porDia"></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h2 class="card-title">Análises <span class="title-note" id="qtdLista"></span></h2>
+      <p class="muted hint">Clique numa análise para ver a ficha completa do associado e do veículo. Horários de Brasília.</p>
+      <div class="table-wrap scroll" id="lista"></div>
+    </section>
+  </main>
+
+  <dialog id="detalhe">
+    <div class="dlg-head">
+      <div><h3 id="dTitulo"></h3><div class="sub" id="dSub"></div></div>
+      <button type="button" id="dFechar" class="btn-secondary">Fechar</button>
+    </div>
+    <div class="dlg-body" id="dCorpo"></div>
+  </dialog>
+</body>
+</html>
